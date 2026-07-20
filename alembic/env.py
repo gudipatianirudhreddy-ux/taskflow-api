@@ -5,6 +5,9 @@ from sqlalchemy import pool
 
 from alembic import context
 from app.models import Base
+import os
+from dotenv import load_dotenv
+load_dotenv()
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -39,6 +42,7 @@ def run_migrations_offline() -> None:
 
     """
     url = config.get_main_option("sqlalchemy.url")
+    url = url.replace("${DB_PASSWORD}", os.getenv("DB_PASSWORD"))
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -57,8 +61,12 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    configuration = config.get_section(config.config_ini_section, {})
+    configuration["sqlalchemy.url"] = configuration["sqlalchemy.url"].replace(
+        "${DB_PASSWORD}", os.getenv("DB_PASSWORD")
+    )
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )

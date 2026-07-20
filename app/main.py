@@ -3,50 +3,11 @@ from .import schemas
 from . import database,models
 from sqlalchemy.orm import Session
 from typing import List
+from . import auth
+from .posts import posts
 app=FastAPI()
-
+app.include_router(auth.router)
+app.include_router(posts.router)
 @app.get("/")
 def root():
     return {"message":"Welcome to taskapi"}
-
-@app.get("/tasks",status_code=status.HTTP_200_OK,response_model=List[schemas.TasksPost])
-def get_tasks(db: Session = Depends(database.get_db)):
-    tasks=db.query(models.tasks).all()
-    if tasks is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"Tasks not there")
-    return tasks
-
-@app.post("/tasks",status_code=status.HTTP_200_OK,response_model=schemas.TasksPost)
-def post_tasks(posts: schemas.Tasks,db: Session = Depends(database.get_db)):
-    added=models.tasks(**posts.dict())
-    db.add(added)
-    db.commit()
-    db.refresh(added)
-    return added
-
-@app.get("/tasks/{id}",status_code=status.HTTP_200_OK,response_model=schemas.TasksPost)
-def getting_tasks(id: int, db: Session = Depends(database.get_db)):
-    ans=db.query(models.tasks).filter(models.tasks.id==id).first()
-    if not ans:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Invalid id")
-    return ans
-
-@app.delete("/tasks/{id}", status_code=status.HTTP_201_CREATED)
-def delete_tasks(id: int, db: Session = Depends(database.get_db)):
-    deli=db.query(models.tasks).filter(models.tasks.id==id).first()
-    if not deli:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid id or id do not exist")
-    db.delete(deli)
-    db.commit()
-    return {"Message":"Deleted successfully"}
-
-@app.put("/tasks/{id}",status_code=status.HTTP_200_OK,response_model=schemas.TasksPost)
-def update_tasks(id: int,posts: schemas.Tasks,db: Session = Depends(database.get_db) ):
-    qur=db.query(models.tasks).filter(models.tasks.id==id)
-    if not qur.first():
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="id do not exists or not found")
-    qur.update(posts.dict(), synchronize_session=False)
-    db.commit()
-    return qur.first()
-
-    
