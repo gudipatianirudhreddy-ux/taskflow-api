@@ -4,7 +4,7 @@ from . import database,models
 from sqlalchemy.orm import Session
 from typing import List
 from . import auth
-from .posts import posts
+from .routes import posts
 app=FastAPI()
 app.include_router(auth.router)
 app.include_router(posts.router)
