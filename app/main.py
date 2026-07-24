@@ -5,9 +5,16 @@ from sqlalchemy.orm import Session
 from typing import List
 from . import auth
 from .routes import posts
+from starlette.middleware.sessions import SessionMiddleware
+from dotenv import load_dotenv
+import os
+load_dotenv()
 app=FastAPI()
 app.include_router(auth.router)
 app.include_router(posts.router)
 @app.get("/")
 def root():
     return {"message":"Welcome to taskapi"}
+
+app.add_middleware(SessionMiddleware,
+    secret_key=os.getenv("SESSION_SECRET_KEY"))

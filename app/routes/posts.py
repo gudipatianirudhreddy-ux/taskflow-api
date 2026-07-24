@@ -17,11 +17,11 @@ def get_tasks(current_user= Depends(get_current_user),db: Session = Depends(data
 
 @router.post("/",status_code=status.HTTP_200_OK,response_model=schemas.TasksPost)
 def post_tasks(posts: schemas.Tasks,db: Session = Depends(database.get_db),current_user= Depends(get_current_user)):
-    added=models.tasks(**posts.dict())
+    added=models.tasks(**posts.dict(),
+                       users_id=current_user["id"])
     db.add(added)
     db.commit()
     db.refresh(added)
-    added.users_id=current_user["id"]
     return added
 
 @router.get("/{id}",status_code=status.HTTP_200_OK,response_model=schemas.TasksPost)
