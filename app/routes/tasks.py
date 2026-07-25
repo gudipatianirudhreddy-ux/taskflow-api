@@ -11,8 +11,6 @@ router=APIRouter(
 @router.get("/",status_code=status.HTTP_200_OK,response_model=List[schemas.TasksPost])
 def get_tasks(current_user= Depends(get_current_user),db: Session = Depends(database.get_db)):
     tasks=db.query(models.tasks).filter(models.tasks.users_id==current_user["id"]).all()
-    if tasks is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail=f"Tasks not there")
     return tasks
 
 @router.post("/",status_code=status.HTTP_200_OK,response_model=schemas.TasksPost)

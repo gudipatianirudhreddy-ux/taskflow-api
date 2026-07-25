@@ -28,6 +28,19 @@ target_metadata = Base.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+def get_url():
+    env_url = os.getenv("DATABASE_URL")
+    if env_url:
+        return env_url
+
+    raw_url = config.get_main_option("sqlalchemy.url", "")
+    if raw_url.startswith("${") and raw_url.endswith("}"):
+        env_name = raw_url[2:-1]
+        return os.getenv(env_name, raw_url)
+
+    return raw_url
+
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -41,8 +54,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
-    url = url.replace("${DB_PASSWORD}", os.getenv("DB_PASSWORD"))
+    url = get_url()
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -62,9 +74,8 @@ def run_migrations_online() -> None:
 
     """
     configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = configuration["sqlalchemy.url"].replace(
-        "${DB_PASSWORD}", os.getenv("DB_PASSWORD")
-    )
+    configuration["sqlalchemy.url"] = get_url()
+
     connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",
@@ -73,7 +84,8 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
         )
 
         with context.begin_transaction():

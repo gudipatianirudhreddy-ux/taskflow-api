@@ -4,14 +4,16 @@ from . import database,models
 from sqlalchemy.orm import Session
 from typing import List
 from . import auth
-from .routes import posts
+from .routes import tasks,groups
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 import os
 load_dotenv()
 app=FastAPI()
 app.include_router(auth.router)
-app.include_router(posts.router)
+app.include_router(tasks.router)
+app.include_router(groups.router)
+
 @app.get("/")
 def root():
     return {"message":"Welcome to taskapi"}

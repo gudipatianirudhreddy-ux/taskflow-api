@@ -1,7 +1,16 @@
-from sqlalchemy import Column,BigInteger,String,Boolean,DateTime, text,ForeignKey
+from sqlalchemy import Column,BigInteger,String,Boolean,DateTime, text,ForeignKey,UniqueConstraint, Enum
+from sqlalchemy.orm import relationship
 from . database import Base
 from sqlalchemy.sql import func
 # from sqlalchemy.ext.declarative import declarative_base
+
+import enum
+
+class InvitationStatus(str, enum.Enum):
+    pending = "pending"
+    accepted = "accepted"
+    expired = "expired"
+
 
 # Base=declarative_base()
 # metadata=Base.metadata
@@ -31,5 +40,33 @@ class Groups(Base):
     created_at=Column(DateTime(timezone=True),nullable=False,server_default=text('now()'))
     updated_at=Column(DateTime(timezone=True),server_default=func.now(),onupdate=func.now())
     owners_id=Column(BigInteger,ForeignKey("users.id", ondelete='CASCADE'))
-    
-    
+
+class Members(Base):
+    __tablename__="GroupMembers"
+    __table_args__ = (
+        UniqueConstraint(
+            "group_id",
+            "user_id",
+            name="uq_group_member"
+        ),
+    )
+    id=Column(BigInteger,primary_key=True,nullable=False)
+    group_id=Column(BigInteger,ForeignKey("Group.id", ondelete='CASCADE'))
+    user_id=Column(BigInteger,ForeignKey("users.id", ondelete='CASCADE')) 
+    role=Column(String, nullable=False)
+    joined_at=Column(DateTime(timezone=True), server_default=text('now()'))
+       
+class GroupInvitation(Base):
+    __tablename__ = "group_invitations"
+
+    id = Column(BigInteger, primary_key=True, nullable=False)
+    group_id = Column(BigInteger, ForeignKey("Group.id", ondelete="CASCADE"), nullable=False)
+    email = Column(String(255), nullable=False)
+    invited_by = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    token = Column(String(255), unique=True, nullable=False)
+    status = Column(Enum(InvitationStatus), nullable=False, default=InvitationStatus.pending.value)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
+    group = relationship("Groups", backref="invitations")
+    inviter = relationship("Users", foreign_keys=[invited_by], backref="sent_invitations")
+
