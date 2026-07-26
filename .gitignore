@@ -2,3 +2,4 @@
 alembic.ini
 __pycache__/
 *.pyc
+data.sql
