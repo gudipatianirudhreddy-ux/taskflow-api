@@ -97,7 +97,7 @@ def send_invite(invite: schemas.GroupInvitationBase,group_id: int,db: Session = 
     db.add(invite_obj)
     db.commit()
     db.refresh(invite_obj)
-    accept_url = f"http://localhost:8000/groups/invitations/{invite_obj.token}/accept"
+    accept_url = f"invite_link = f"https://taskflow-api-v1-225t.onrender.com/groups/invitations/{token}/accept""
     try:
         inviter=db.query(models.Users).filter(models.Users.id==current_user["id"]).first()
         send_group_invitation(
