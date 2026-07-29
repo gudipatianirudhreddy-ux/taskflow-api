@@ -1,7 +1,7 @@
 from pydantic import BaseModel,EmailStr,constr
 from typing import Optional
 from datetime import datetime
-from app.models import InvitationStatus
+from app.models import InvitationStatus, Role
 class Tasks(BaseModel):
     title: str
     content: str
@@ -58,3 +58,45 @@ class GroupInvitationResponse(GroupInvitationBase):
 
     class Config:
         from_attributes = True
+
+class GroupMemberResponse(BaseModel):
+    id: int
+    username: str
+    email: EmailStr
+    role: Role
+    joined_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class MessageResponse(BaseModel):
+    message: str
+
+class GroupTasksCreate(BaseModel):
+    title: str
+    description:  Optional[str]=None
+    assigned_to: int
+    
+
+class GroupTaskUpdate(BaseModel):
+    title: Optional[str] = None
+    description: Optional[str] = None
+    completed: Optional[bool] = None
+    assigned_to: Optional[int] = None
+
+class GroupTaskResponse(BaseModel):
+    id: int
+    title: str
+    description: Optional[str]
+    completed: bool
+    group_id: int
+    assigned_to: int
+    created_by: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str

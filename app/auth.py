@@ -30,6 +30,13 @@ def access_token(username: str, id: int, expires_delta: timedelta):
     encode.update({"exp": expires})
     return jwt.encode(encode, SECRET_KEY,ALGORITHM)
 
+def create_refresh_token(username: str, id: int, expires_delta: timedelta):
+    encode = {"sub": username, "id": id,"type":"refresh"}
+    expires = datetime.utcnow() + expires_delta
+    encode.update({"exp": expires})
+    return jwt.encode(encode, SECRET_KEY, ALGORITHM)
+    
+
 def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
     try:
         payload=jwt.decode(token, SECRET_KEY,algorithms=[ALGORITHM])
@@ -69,9 +76,10 @@ async def google_callback(requests: Request,db: Session = Depends(database.get_d
     acc_token=access_token(
         username=user.username,
         id=user.id,
-        expires_delta=timedelta(minutes=30)
+        expires_delta=timedelta(minutes=20)
     )
-    return {"access_token": acc_token, "token_type":"bearer"}
+    refresh = create_refresh_token(username=user.username,id=user.id,expires_delta=timedelta(days=7))
+    return {"access_token": acc_token,"refresh_token": refresh, "token_type":"bearer"}
     
        
     
@@ -85,5 +93,24 @@ def get_login(current_user=Depends(get_current_user),db: Session = Depends(datab
     
 
 
-
+@router.post("/refresh")
+def refresh_token(request: schemas.RefreshTokenRequest):
+    try:
+        payload=jwt.decode(request.refresh_token,SECRET_KEY,algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        user_id = payload.get("id")
+        token_type = payload.get("type")
+        if token_type!="refresh":
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
+        if username is None or user_id is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
+        new=access_token(username=username,id=user_id,expires_delta=timedelta(minutes=20))
+        return{
+            "access_token": new,
+            "type": "bearer"
+        }
+    except JWTError:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate user")
+    
+            
 

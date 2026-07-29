@@ -11,6 +11,11 @@ class InvitationStatus(str, enum.Enum):
     accepted = "accepted"
     expired = "expired"
 
+class Role(str, enum.Enum):
+    member="member"
+    admin="admin"
+    owner="owner"
+    
 
 # Base=declarative_base()
 # metadata=Base.metadata
@@ -53,7 +58,7 @@ class Members(Base):
     id=Column(BigInteger,primary_key=True,nullable=False)
     group_id=Column(BigInteger,ForeignKey("Group.id", ondelete='CASCADE'))
     user_id=Column(BigInteger,ForeignKey("users.id", ondelete='CASCADE')) 
-    role=Column(String, nullable=False)
+    role=Column(Enum(Role), nullable=False, default=Role.member.value)
     joined_at=Column(DateTime(timezone=True), server_default=text('now()'))
        
 class GroupInvitation(Base):
@@ -69,4 +74,44 @@ class GroupInvitation(Base):
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=text("now()"))
     group = relationship("Groups", backref="invitations")
     inviter = relationship("Users", foreign_keys=[invited_by], backref="sent_invitations")
+
+class GroupTask(Base):
+    __tablename__ = "group_tasks"
+
+    id = Column(BigInteger, primary_key=True, index=True)
+
+    title = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+
+    completed = Column(Boolean, server_default="False")
+
+    group_id = Column(
+        BigInteger,
+        ForeignKey("Group.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    assigned_to = Column(
+        BigInteger,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    created_by = Column(
+        BigInteger,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False
+    )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        server_default=text("now()")
+    )
+
+    updated_at = Column(
+        DateTime(timezone=True),
+        server_default=text("now()"),
+        onupdate=func.now()
+    )
+    
 
